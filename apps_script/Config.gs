@@ -2,7 +2,7 @@
 function getConfig() {
   return {
     // API 키 (스크립트 속성에서 가져옴)
-    API_KEY: PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY') || "AIzaSyCebGJ76CeGGruVL6QkNyBoSOEU_iwOyRU",
+    API_KEY: PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY') || "GEMINI_API_KEY",
     
     // 모델명
     MODEL_NAME: "models/gemini-2.5-flash",
