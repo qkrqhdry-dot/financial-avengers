@@ -2,15 +2,6 @@
 // 🖥️ [UI] 메뉴 및 대시보드 (HTML)
 // ==========================================
 
-function onOpen() {
-  SpreadsheetApp.getUi()
-    .createMenu('💵 The Financial Avengers')
-    .addItem(`🚀 이사회 소집 (투자 진단 실행)`, 'runAvengersAnalysis')
-    .addSeparator()
-    .addItem(`📖 회의록 열람 (시각화 대시보드)`, 'showAvengersDialog')
-    .addToUi();
-}
-
 function showAvengersDialog() {
   // 백틱(`)을 사용하여 HTML 문자열이 깨지지 않도록 안전하게 작성했습니다.
   var htmlContent = `
@@ -147,7 +138,115 @@ function showAvengersDialog() {
     <body><div id="report-content"></div></body>
     </html>
   `;
-  SpreadsheetApp.getUi().showModalDialog(HtmlService.createHtmlOutput(htmlContent).setWidth(1200).setHeight(900), ' '); 
+  SpreadsheetApp.getUi().showModalDialog(HtmlService.createHtmlOutput(htmlContent).setWidth(1200).setHeight(900), ' ');
+}
+
+// 🔵 [UI] 포트폴리오 전체 판단 전용 대시보드
+function openPortfolioDashboard() {
+  var htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <base target="_top">
+      <style>
+        body { font-family: 'Segoe UI', 'Roboto', Helvetica, Arial, sans-serif; padding: 40px; background-color: #f7f9fb; color: #2c3e50; line-height: 1.7; font-size: 16px; }
+        .report-container { background: white; max-width: 1100px; margin: 0 auto; padding: 50px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border-top: 8px solid #2c3e50; }
+        .header { border-bottom: 2px solid #ecf0f1; padding-bottom: 20px; margin-bottom: 40px; display: flex; justify-content: space-between; align-items: flex-end; }
+        h1 { margin: 0; font-size: 32px; color: #2c3e50; font-weight: 800; letter-spacing: -0.5px; }
+        .date { color: #7f8c8d; font-weight: 600; font-size: 14px; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 40px; }
+        .dashboard-card { background: #fff; border: 1px solid #e0e0e0; border-radius: 16px; padding: 22px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+        .card-title { font-size: 13px; color: #95a5a6; font-weight: 700; display: block; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .big-value { font-size: 26px; font-weight: 900; color: #2c3e50; }
+        .section-title { color: #34495e; font-size: 20px; margin-top: 40px; margin-bottom: 12px; padding-left: 15px; border-left: 5px solid #3498db; font-weight: 800; letter-spacing: -0.5px; }
+        .pill { display: inline-block; padding: 8px 16px; border-radius: 999px; background: #ecf0f1; color: #2c3e50; font-weight: 700; margin-right: 8px; }
+        .text-block { background: #fcfdfd; border: 1px solid #dfe6e9; border-radius: 14px; padding: 22px; box-shadow: 0 5px 15px rgba(52, 152, 219, 0.05); }
+        .list { list-style: none; padding: 0; margin: 0; }
+        .list li { margin-bottom: 8px; color: #2c3e50; }
+        .loader { text-align: center; padding: 80px; color: #7f8c8d; font-size: 18px; }
+        .error-box { background: #fff; border: 2px solid #c0392b; color: #c0392b; padding: 30px; border-radius: 10px; text-align: center; }
+        .btn-area { text-align: center; margin-top: 40px; }
+        button { background-color: #2c3e50; color: white; border: none; padding: 14px 40px; border-radius: 50px; cursor: pointer; font-size: 16px; font-weight: bold; box-shadow: 0 5px 20px rgba(44, 62, 80, 0.3); transition: all 0.3s; }
+        button:hover { background-color: #34495e; transform: translateY(-2px); box-shadow: 0 8px 25px rgba(44, 62, 80, 0.4); }
+      </style>
+      <script>
+        function loadPortfolioData() {
+          document.getElementById('portfolio-content').innerHTML = '<div class="loader">📊 포트폴리오 전체 판단 데이터를 불러오는 중입니다...</div>';
+          google.script.run.withSuccessHandler(renderPortfolio).withFailureHandler(showPortfolioError).getPortfolioDashboardData();
+        }
+
+        function showPortfolioError(err) {
+          var container = document.getElementById('portfolio-content');
+          container.innerHTML = '<div class="error-box"><h3>🚨 시스템 오류</h3><p>' + err + '</p><br><button onclick="google.script.host.close()">닫기</button></div>';
+        }
+
+        function renderPortfolio(raw) {
+          var container = document.getElementById('portfolio-content');
+          var data;
+          try {
+            data = JSON.parse(raw);
+          } catch (e) {
+            container.innerHTML = '<div class="error-box"><h3>데이터 파싱 오류</h3><p>데이터 형식이 올바르지 않습니다.</p><br><button onclick="google.script.host.close()">닫기</button></div>';
+            return;
+          }
+
+          if (data.error) {
+            container.innerHTML = '<div class="error-box"><h3>⚠️ 확인 필요</h3><p>' + data.error + '</p><br><button onclick="google.script.host.close()">닫기</button></div>';
+            return;
+          }
+
+          var conclusion = data.sections && data.sections.conclusion ? data.sections.conclusion : '분석 본문이 없습니다.';
+          var avengers = data.sections && data.sections.avengers ? data.sections.avengers : '';
+          var safetyPct = (Number(data.safetyRatio || 0) * 100).toFixed(1) + '%';
+          var lossPct = (Number(data.summary && data.summary.lossRatio || 0) * 100).toFixed(1) + '%';
+          var mddPct = (Number(data.summary && data.summary.avgMdd || 0)).toFixed(1) + '%';
+          var regime = data.regime || 'N/A';
+
+          function listToHtml(items) {
+            if (!items || !items.length) return '<li>데이터 없음</li>';
+            return items.slice(0,5).map(function(it){
+              var weight = typeof it.weight === 'number' ? it.weight.toFixed(1) + '%' : '-';
+              return '<li><strong>' + (it.ticker || it.name || '-') + '</strong> · ' + weight + '</li>';
+            }).join('');
+          }
+
+          var conclusionHtml = conclusion.replace(/\n/g, '<br>');
+          var avengersHtml = avengers ? '<div class="text-block" style="margin-top:16px;"><strong>어벤저스 한 줄 요약</strong><br>' + avengers.replace(/\n/g, '<br>') + '</div>' : '';
+
+          var html = '<div class="report-container">' +
+            '  <div class="header">' +
+            '    <h1>📊 포트폴리오 전체 판단 (Full Portfolio Fit)</h1>' +
+            '    <div class="date">' + (data.date || '') + '</div>' +
+            '  </div>' +
+            '  <div class="dashboard-grid">' +
+            '    <div class="dashboard-card"><span class="card-title">안전자산 비중</span><div class="big-value">' + safetyPct + '</div></div>' +
+            '    <div class="dashboard-card"><span class="card-title">손실 포지션 비율</span><div class="big-value">' + lossPct + '</div></div>' +
+            '    <div class="dashboard-card"><span class="card-title">평균 MDD</span><div class="big-value">' + mddPct + '</div></div>' +
+            '  </div>' +
+            '  <div class="text-block">' +
+            '    <div class="section-title">Full Portfolio Fit 종합 결론</div>' +
+                 conclusionHtml +
+                 avengersHtml +
+            '  </div>' +
+            '  <div class="section-title">상위 편입 종목</div>' +
+            '  <ul class="list">' + listToHtml(data.summary ? data.summary.topHoldings : []) + '</ul>' +
+            '  <div class="section-title">주요 섹터 비중</div>' +
+            '  <ul class="list">' + listToHtml(data.summary ? data.summary.sectors : []) + '</ul>' +
+            '  <div class="section-title">Market Regime</div>' +
+            '  <div class="pill">' + regime + '</div>' +
+            '  <div class="btn-area"><button onclick="google.script.host.close()">닫기</button></div>' +
+            '</div>';
+
+          container.innerHTML = html;
+        }
+        window.onload = loadPortfolioData;
+      </script>
+    </head>
+    <body><div id="portfolio-content"></div></body>
+    </html>
+  `;
+
+  SpreadsheetApp.getUi().showModalDialog(HtmlService.createHtmlOutput(htmlContent).setWidth(1200).setHeight(900), ' ');
 }
 
 // 팝업 대시보드에서 선택된 행의 데이터를 가져오는 함수
@@ -178,5 +277,41 @@ function getSelectedRowData() {
       rsi: rsiVal || "N/A",
       signal: signal || "진단 전",
       advice: advice || "분석이 필요합니다."
+  });
+}
+
+// 🔵 포트폴리오 전체 판단 데이터를 반환 (추가 API 호출 없음)
+function getPortfolioDashboardData() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const config = getConfig();
+  const pmSheet = ss.getSheetByName("Portfolio_Meeting");
+
+  if (!pmSheet) {
+    return JSON.stringify({ error: "포트폴리오 전체 판단 리포트가 없습니다. '이사회 소집 (투자 진단 실행)'을 먼저 실행해주세요." });
+  }
+
+  const advice = pmSheet.getRange("B2").getValue();
+  if (!advice || String(advice).trim() === "") {
+    return JSON.stringify({ error: "포트폴리오 전체 판단 텍스트가 비어 있습니다. 리포트를 먼저 생성해주세요." });
+  }
+
+  const sheet1 = ss.getSheetByName("시트1");
+  const scannerSheet = ss.getSheetByName(config.SCANNER_SHEET_NAME);
+  const pSheet = ensurePortfolioSheet();
+
+  const summary = getFullPortfolioData(sheet1, scannerSheet);
+  const safetyRatio = normalizePercentRatio(pSheet.getRange("C7").getValue(), config.SAFETY_CORE_MIN);
+  const cashWeight = normalizePercentRatio(pSheet.getRange("C4").getValue(), 0);
+  const regime = classifyMarketRegime(safetyRatio, summary.lossRatio, summary.avgMdd);
+
+  const sections = parseFullPortfolioReport(advice);
+
+  return JSON.stringify({
+    sections: { conclusion: sections.conclusion, avengers: sections.avengers },
+    summary: summary,
+    safetyRatio: safetyRatio,
+    cashWeight: cashWeight,
+    regime: regime,
+    date: new Date().toLocaleDateString()
   });
 }
