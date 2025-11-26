@@ -19,7 +19,12 @@ function callGemini(prompt, modelName) {
   const url = `https://generativelanguage.googleapis.com/v1/${modelPath}:generateContent?key=${API_KEY}`;
   const payload = {
       contents: [{ parts: [{ text: String(promptText) }] }],
-      generationConfig: { temperature: 0.1 }
+      generationConfig: { temperature: 0.1 },
+      tools: [
+        {
+          googleSearchRetrieval: {}
+        }
+      ]
   };
   const options = {
     method: "post",
