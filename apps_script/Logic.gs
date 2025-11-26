@@ -21,15 +21,29 @@ function callGemini(prompt, modelName) {
   for (let i = 0; i < 5; i++) {
     try {
       const res = UrlFetchApp.fetch(url, options);
-      if (res.getResponseCode() === 200) {
-        const json = JSON.parse(res.getContentText());
-        if (json.candidates && json.candidates[0].content) {
-            return json.candidates[0].content.parts[0].text.trim();
+      const code = res.getResponseCode();
+      const body = res.getContentText();
+
+      Logger.log("[callGemini] HTTP code=" + code);
+
+      if (code !== 200) {
+        Logger.log("[callGemini] Error body (first 300 chars): " + body.substring(0, 300));
+      }
+
+      if (code === 200) {
+        try {
+          const json = JSON.parse(body);
+          if (json.candidates && json.candidates[0].content) {
+              return json.candidates[0].content.parts[0].text.trim();
+          }
+        } catch (e) {
+          Logger.log("[callGemini] JSON parse error: " + e);
+          Logger.log("[callGemini] Raw body (first 300 chars): " + body.substring(0, 300));
         }
       }
-      Utilities.sleep(Math.pow(2, i) * 1000); 
-    } catch (e) { 
-      Utilities.sleep(Math.pow(2, i) * 1000); 
+      Utilities.sleep(Math.pow(2, i) * 1000);
+    } catch (e) {
+      Utilities.sleep(Math.pow(2, i) * 1000);
     }
   }
   return "❌ AI 응답 실패";

@@ -623,11 +623,15 @@ function runAvengersAnalysis() {
         3. **Translation**: 'The Debate' to KOREAN.
       `;
 
-      let advice = callGemini(prompt, config.MODEL_NAME); 
-      
-      if (advice.length < MIN_RESPONSE_LENGTH || advice.startsWith("❌")) {
+      let advice = callGemini(prompt, config.MODEL_NAME);
+
+      Logger.log("[runAvengersAnalysis] Ticker=" + ticker);
+      Logger.log("[runAvengersAnalysis] Advice length=" + (advice ? advice.length : 0));
+      Logger.log("[runAvengersAnalysis] Advice head=" + String(advice).substring(0, 200));
+
+      if (!advice || advice.startsWith("❌ AI 응답 실패")) {
           signalCell.setValue("🚫 응답 실패");
-          statusCell.setValue("❌ 응답 실패 (길이/API)").setWrap(true);
+          statusCell.setValue("❌ 응답 실패 (API)").setWrap(true);
           continue;
       }
       
