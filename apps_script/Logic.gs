@@ -12,24 +12,32 @@ function callGemini(prompt, modelName) {
       generationConfig: { temperature: 0.1 }, 
       tools: [{ "google_search": {} }] 
   };
-  const options = { 
-    method: "post", 
-    contentType: "application/json", 
-    payload: JSON.stringify(payload), 
-    muteHttpExceptions: true 
+  const options = {
+    method: "post",
+    contentType: "application/json",
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
   };
   for (let i = 0; i < 5; i++) {
     try {
       const res = UrlFetchApp.fetch(url, options);
-      if (res.getResponseCode() === 200) {
-        const json = JSON.parse(res.getContentText());
-        if (json.candidates && json.candidates[0].content) {
-            return json.candidates[0].content.parts[0].text.trim();
+      const status = res.getResponseCode();
+      if (status === 200) {
+        try {
+          const json = JSON.parse(res.getContentText());
+          if (json.candidates && json.candidates[0].content) {
+              return json.candidates[0].content.parts[0].text.trim();
+          }
+        } catch (parseError) {
+          Logger.log(`Gemini JSON parse error (attempt ${i + 1}): ${parseError}`);
         }
+      } else {
+        Logger.log(`Gemini fetch error (attempt ${i + 1}): HTTP ${status} - ${res.getContentText()}`);
       }
-      Utilities.sleep(Math.pow(2, i) * 1000); 
-    } catch (e) { 
-      Utilities.sleep(Math.pow(2, i) * 1000); 
+    } catch (e) {
+      Logger.log(`Gemini fetch exception (attempt ${i + 1}): ${e}`);
+    } finally {
+      Utilities.sleep(Math.pow(2, i) * 1000);
     }
   }
   return "❌ AI 응답 실패";
