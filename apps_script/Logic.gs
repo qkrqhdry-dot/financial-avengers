@@ -6,11 +6,13 @@
 function callGemini(prompt, modelName) {
   const config = getConfig();
   const API_KEY = config.API_KEY;
-  const url = `https://generativelanguage.googleapis.com/v1beta/${modelName}:generateContent?key=${API_KEY}`;
+  const promptText = typeof prompt === 'string' ? prompt : JSON.stringify(prompt || "");
+  const modelString = (typeof modelName === 'string' && modelName) ? modelName : (config.MODEL_NAME || "models/gemini-2.5-flash-latest");
+  const modelPath = String(modelString).indexOf("models/") === 0 ? modelString : `models/${modelString}`;
+  const url = `https://generativelanguage.googleapis.com/v1/${modelPath}:generateContent?key=${API_KEY}`;
   const payload = {
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.1 }, 
-      tools: [{ "google_search": {} }] 
+      contents: [{ parts: [{ text: promptText }] }],
+      generationConfig: { temperature: 0.1 }
   };
   const options = {
     method: "post",
@@ -25,9 +27,13 @@ function callGemini(prompt, modelName) {
       if (status === 200) {
         try {
           const json = JSON.parse(res.getContentText());
-          if (json.candidates && json.candidates[0].content) {
-              return json.candidates[0].content.parts[0].text.trim();
+          const candidates = (json && json.candidates) ? json.candidates : [];
+          if (candidates.length > 0 && candidates[0].content && candidates[0].content.parts) {
+              const parts = candidates[0].content.parts;
+              const text = parts.map(p => (p && typeof p.text === 'string') ? p.text : "").join("").trim();
+              if (text) return text;
           }
+          Logger.log(`Gemini empty response (attempt ${i + 1}): ${res.getContentText()}`);
         } catch (parseError) {
           Logger.log(`Gemini JSON parse error (attempt ${i + 1}): ${parseError}`);
         }
@@ -36,11 +42,18 @@ function callGemini(prompt, modelName) {
       }
     } catch (e) {
       Logger.log(`Gemini fetch exception (attempt ${i + 1}): ${e}`);
-    } finally {
+    }
+    if (i < 4) {
       Utilities.sleep(Math.pow(2, i) * 1000);
     }
   }
   return "❌ AI 응답 실패";
+}
+
+// ✅ Simple manual test to validate the Gemini endpoint and payload shape
+function testGeminiSimple() {
+  const config = getConfig();
+  return callGemini("Hello from Financial Avengers", config.MODEL_NAME);
 }
 
 // 🔵 [Fixed] Scanner Data Helper: 전역 함수로 복원 (인자 없이 호출 시 내부적으로 처리)
