@@ -14,12 +14,12 @@ function callGemini(prompt, modelName) {
   const config = getConfig();
   const API_KEY = config.API_KEY;
   const promptText = normalizePromptText(prompt);
-  const modelString = (typeof modelName === 'string' && modelName) ? modelName : (config.MODEL_NAME || "models/gemini-2.5-flash-latest");
-  const modelPath = String(modelString).indexOf("models/") === 0 ? modelString : `models/${modelString}`;
-  const url = `https://generativelanguage.googleapis.com/v1/${modelPath}:generateContent?key=${API_KEY}`;
+  const finalModel = (typeof modelName === 'string' && modelName) ? modelName : config.MODEL_NAME;
+  const url = `https://generativelanguage.googleapis.com/v1beta/${finalModel}:generateContent?key=${API_KEY}`;
   const payload = {
       contents: [{ parts: [{ text: String(promptText) }] }],
-      generationConfig: { temperature: 0.1 }
+      generationConfig: { temperature: 0.1 },
+      tools: [{ "google_search": {} }]
   };
   const options = {
     method: "post",
