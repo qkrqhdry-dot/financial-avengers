@@ -3,6 +3,13 @@
 // ==========================================
 
 function showAvengersDialog() {
+  let ui;
+  try {
+    ui = SpreadsheetApp.getUi();
+  } catch (e) {
+    Logger.log(`showAvengersDialog skipped (no UI context): ${e}`);
+    return;
+  }
   // 백틱(`)을 사용하여 HTML 문자열이 깨지지 않도록 안전하게 작성했습니다.
   var htmlContent = `
     <!DOCTYPE html>
@@ -138,11 +145,19 @@ function showAvengersDialog() {
     <body><div id="report-content"></div></body>
     </html>
   `;
-  SpreadsheetApp.getUi().showModalDialog(HtmlService.createHtmlOutput(htmlContent).setWidth(1200).setHeight(900), ' ');
+  ui.showModalDialog(HtmlService.createHtmlOutput(htmlContent).setWidth(1200).setHeight(900), ' ');
 }
 
 // 🔵 [UI] 포트폴리오 전체 판단 전용 대시보드
 function openPortfolioDashboard() {
+  let ui;
+  try {
+    ui = SpreadsheetApp.getUi();
+  } catch (e) {
+    Logger.log(`openPortfolioDashboard skipped (no UI context): ${e}`);
+    return;
+  }
+
   var htmlContent = `
     <!DOCTYPE html>
     <html>
@@ -246,7 +261,7 @@ function openPortfolioDashboard() {
     </html>
   `;
 
-  SpreadsheetApp.getUi().showModalDialog(HtmlService.createHtmlOutput(htmlContent).setWidth(1200).setHeight(900), ' ');
+  ui.showModalDialog(HtmlService.createHtmlOutput(htmlContent).setWidth(1200).setHeight(900), ' ');
 }
 
 // 팝업 대시보드에서 선택된 행의 데이터를 가져오는 함수
