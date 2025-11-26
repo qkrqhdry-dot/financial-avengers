@@ -5,12 +5,11 @@
 // 🔵 [UI] 구글 시트 메뉴 생성
 function onOpen() {
   SpreadsheetApp.getUi()
-      .createMenu('Financial Avengers')
-      .addItem('🚀 분석 실행 (전체)', 'runAvengersAnalysis')
-      .addItem('🛡️ Scanner 데이터 검증', 'runScannerValidation')
+      .createMenu('💵 The Financial Avengers')
+      .addItem('🚀 이사회 소집 (투자 진단 실행)', 'runAvengersAnalysis')
       .addSeparator()
-      .addItem('🔍 회의록 팝업 (선택 종목)', 'openAvengersReport')
-      .addItem('📊 포트폴리오 전체 분석 보고서 생성 (Full Portfolio Fit)', 'generatePortfolioReport')
+      .addItem('📖 회의록 열람 (시각화 대시보드)', 'showAvengersDialog')
+      .addItem('📊 포트폴리오 전체 판단 (Full Portfolio Fit)', 'openPortfolioDashboard')
       .addToUi();
 }
 
@@ -624,11 +623,15 @@ function runAvengersAnalysis() {
         3. **Translation**: 'The Debate' to KOREAN.
       `;
 
-      let advice = callGemini(prompt, config.MODEL_NAME); 
-      
-      if (advice.length < MIN_RESPONSE_LENGTH || advice.startsWith("❌")) {
+      let advice = callGemini(prompt, config.MODEL_NAME);
+
+      Logger.log("[runAvengersAnalysis] Ticker=" + ticker);
+      Logger.log("[runAvengersAnalysis] Advice length=" + (advice ? advice.length : 0));
+      Logger.log("[runAvengersAnalysis] Advice head=" + String(advice).substring(0, 200));
+
+      if (!advice || advice.startsWith("❌ AI 응답 실패")) {
           signalCell.setValue("🚫 응답 실패");
-          statusCell.setValue("❌ 응답 실패 (길이/API)").setWrap(true);
+          statusCell.setValue("❌ 응답 실패 (API)").setWrap(true);
           continue;
       }
       
