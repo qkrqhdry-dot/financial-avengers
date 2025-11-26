@@ -6,11 +6,11 @@
 function callGemini(prompt, modelName) {
   const config = getConfig();
   const API_KEY = config.API_KEY;
-  const url = `https://generativelanguage.googleapis.com/v1beta/${modelName}:generateContent?key=${API_KEY}`;
+  const modelPath = modelName.startsWith("models/") ? modelName : `models/${modelName}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/${modelPath}:generateContent?key=${API_KEY}`;
   const payload = {
       contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.1 }, 
-      tools: [{ "google_search": {} }] 
+      generationConfig: { temperature: 0.1 }
   };
   const options = {
     method: "post",
@@ -25,8 +25,10 @@ function callGemini(prompt, modelName) {
       if (status === 200) {
         try {
           const json = JSON.parse(res.getContentText());
-          if (json.candidates && json.candidates[0].content) {
-              return json.candidates[0].content.parts[0].text.trim();
+          if (json.candidates && json.candidates[0].content && json.candidates[0].content.parts) {
+              const parts = json.candidates[0].content.parts;
+              const text = parts.map(p => p.text || "").join("").trim();
+              if (text) return text;
           }
         } catch (parseError) {
           Logger.log(`Gemini JSON parse error (attempt ${i + 1}): ${parseError}`);
@@ -36,7 +38,8 @@ function callGemini(prompt, modelName) {
       }
     } catch (e) {
       Logger.log(`Gemini fetch exception (attempt ${i + 1}): ${e}`);
-    } finally {
+    }
+    if (i < 4) {
       Utilities.sleep(Math.pow(2, i) * 1000);
     }
   }
