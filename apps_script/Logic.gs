@@ -6,12 +6,12 @@
 function callGemini(prompt, modelName) {
   const config = getConfig();
   const API_KEY = config.API_KEY;
-  const promptText = typeof prompt === 'string' ? prompt : JSON.stringify(prompt || "");
+  const promptText = (typeof prompt === 'string') ? prompt : ((prompt && typeof prompt.text === 'string') ? prompt.text : JSON.stringify(prompt || ""));
   const modelString = (typeof modelName === 'string' && modelName) ? modelName : (config.MODEL_NAME || "models/gemini-2.5-flash-latest");
   const modelPath = String(modelString).indexOf("models/") === 0 ? modelString : `models/${modelString}`;
   const url = `https://generativelanguage.googleapis.com/v1/${modelPath}:generateContent?key=${API_KEY}`;
   const payload = {
-      contents: [{ parts: [{ text: promptText }] }],
+      contents: [{ parts: [{ text: String(promptText) }] }],
       generationConfig: { temperature: 0.1 }
   };
   const options = {
