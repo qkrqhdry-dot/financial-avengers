@@ -5,6 +5,17 @@
 function getSystemPrompt(legalRiskFlag, allowedActions, brokerageAssetsUSD, currentPrice, totalQuantity, currentWeight, targetAnnualReturn) {
   const config = getConfig();
   const RISK_FREE_RATE = config.RISK_FREE_RATE * 100; // 4.5%
+
+  const safeBrokerage = Number(brokerageAssetsUSD || 0);
+  const safePrice     = Number(currentPrice || 0);
+  const safeQty       = Number(totalQuantity || 0);
+  const safeWeight    = Number(currentWeight || 0);
+  const safeTargetRet = Number(typeof targetAnnualReturn === 'number'
+    ? targetAnnualReturn
+    : config.TARGET_ANNUAL_RETURN || 0);
+
+  const safeActionsArr = Array.isArray(allowedActions) ? allowedActions : [];
+  const allowedActionsText = safeActionsArr.length > 0 ? safeActionsArr.join(', ') : 'N/A';
   
   // 법무팀 상태 설정 (111.txt 원본 유지)
   const legalTeamStatus = legalRiskFlag ? 
@@ -109,9 +120,9 @@ If violation found -> Correct immediately: "수정: [Original]를 [Correction]�
 ## [General Instructions]
 You are simulating a high-stakes C-Suite investment meeting with 11 personas + 1 Owner(User).
 Your analysis targets the **Owner’s Personal Brokerage Account**.
-**[GOAL] All price targets must be set with an aim to achieve an annualized return of ${targetAnnualReturn*100}% or better.**
-**[BROKERAGE CAPITAL] Total Investable Brokerage Assets: $${brokerageAssetsUSD.toFixed(2)}**
-**[CURRENT PRICE] Current Stock Price: $${currentPrice.toFixed(2)}**
+**[GOAL] All price targets must be set with an aim to achieve an annualized return of ${safeTargetRet*100}% or better.**
+**[BROKERAGE CAPITAL] Total Investable Brokerage Assets: $${safeBrokerage.toFixed(2)}**
+**[CURRENT PRICE] Current Stock Price: $${safePrice.toFixed(2)}**
 
 **[SYSTEM ARCHITECTURE: FACTS ONLY]**
 - **Code Layer:** Calculates Sharpe, MDD, Volatility, RSI, Trend, and defines [Allowed Actions].
@@ -210,14 +221,14 @@ ${legalTeamStatus}
 # REQUIRED OUTPUT FORMAT (Strictly follow order):
 
 ## 🏁 CEO 최종 결정: [강력매수/분할매수/관망/전량매도/비중축소]
-(Must align with Allowed Actions: ${allowedActions.join(", ")})
+(Must align with Allowed Actions: ${allowedActionsText})
         
 ## 🚀 CEO 실행 전략 (Action Plan)
 **[Common Rule]**: All Share counts must be INTEGERS (floored).
 **[If Action: 관망]**
 * **관망 방향성(Bias):** 매수 {x}% / 매도 {y}%
 * **관망 등급(Bias Grade):** {Grade}
-* **현재 포트폴리오 내 실제 비중:** ${currentWeight.toFixed(1)}% (Use provided value)
+* **현재 포트폴리오 내 실제 비중:** ${safeWeight.toFixed(1)}% (Use provided value)
 * **이 종목의 장기 목표 비중:** (Suggest based on analysis - Logic will auto-update sheet if empty)
 * **재진입 관찰 가격:** (e.g., SMA200, Pivot S1 or N/A if unreliable)
 
