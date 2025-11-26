@@ -5,7 +5,7 @@ function getConfig() {
     API_KEY: PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY') || "GEMINI_API_KEY",
     
     // 모델명
-    MODEL_NAME: "models/gemini-2.5-flash",
+    MODEL_NAME: "models/gemini-2.5-flash-latest",
 
     // 파라미터
     TARGET_ANNUAL_RETURN: 0.20, 

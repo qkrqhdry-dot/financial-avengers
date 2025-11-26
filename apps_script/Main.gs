@@ -4,15 +4,22 @@
 
 // 🔵 [UI] 구글 시트 메뉴 생성
 function onOpen() {
-  SpreadsheetApp.getUi()
-      .createMenu('💵 The Financial Avengers')
-      .addItem('🚀 이사회 소집 (투자 진단 실행)', 'runAvengersAnalysis')
-      .addSeparator()
-      .addItem('🧠 포트폴리오 리포트 생성', 'generatePortfolioReport')
-      .addSeparator()
-      .addItem('📖 회의록 열람 (시각화 대시보드)', 'showAvengersDialog')
-      .addItem('📊 포트폴리오 전체 판단 (Full Portfolio Fit)', 'openPortfolioDashboard')
-      .addToUi();
+  let ui;
+  try {
+    ui = SpreadsheetApp.getUi();
+  } catch (e) {
+    Logger.log(`onOpen skipped (no UI context): ${e}`);
+    return;
+  }
+
+  ui.createMenu('💵 The Financial Avengers')
+    .addItem('🚀 이사회 소집 (투자 진단 실행)', 'runAvengersAnalysis')
+    .addSeparator()
+    .addItem('🧠 포트폴리오 리포트 생성', 'generatePortfolioReport')
+    .addSeparator()
+    .addItem('📖 회의록 열람 (시각화 대시보드)', 'showAvengersDialog')
+    .addItem('📊 포트폴리오 전체 판단 (Full Portfolio Fit)', 'openPortfolioDashboard')
+    .addToUi();
 }
 
 // 🔵 [UI] 선택된 종목의 회의록 팝업 UI 생성
