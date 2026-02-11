@@ -128,7 +128,7 @@ function showFullPortfolioDialog(advice, summary, safetyRatio, regime) {
 }
 
 // Helper: Bias Score
-function calculateBiasScore(ticker, techData, finData, brokerageAssetsUSD, cashWeight) {
+function calculateBiasScore(techData, finData, brokerageAssetsUSD, cashWeight) {
   const config = getConfig();
   let score = 0;
   const pointsPerFactor = 20;
@@ -301,7 +301,6 @@ function buildDailyPortfolioSummary() {
     const tgt = d.tgtWeight; 
     const buyDecisions = ["강력매수", "분할매수", "비중확대", "진입"];
     const sellDecisions = ["전량매도", "비중축소"];
-    const watchDecisions = ["관망", "보유", "중립"];
     const biasBuy = ["A", "B"];
     const biasSell = ["D", "E"];
     
@@ -321,7 +320,6 @@ function buildDailyPortfolioSummary() {
     let candidateType = "Watchlist";
     if (isBuyCandidate) candidateType = "Buy";
     else if (isSellCandidate) candidateType = "Sell";
-    else if (watchDecisions.includes(aiDecision)) candidateType = "Watchlist";
     
     output.push([
       d.ticker,
@@ -568,12 +566,7 @@ function runAvengersAnalysis() {
         - Allowed Actions: **[${allowedActions.join(", ")}]**
       `;
 
-      let calcSignals = [];
-      if (parseFloat(techData.rsi) < 30) calcSignals.push("RSI Oversold");
-      else if (parseFloat(techData.rsi) > 70) calcSignals.push("RSI Overbought");
-      let quantGrounding = calcSignals.join(", ");
-      
-      const biasResult = calculateBiasScore(ticker, techData, finData, brokerageAssetsUSD, cashWeight);
+      const biasResult = calculateBiasScore(techData, finData, brokerageAssetsUSD, cashWeight);
 
       let scannerPromptSection = (finData.source === "PYTHON_SCANNER") 
           ? `[PYTHON SCANNER DATA]: Fair Value ${finData.fairValueScore}, Upside ${finData.upsidePotential}%, Quality ${finData.qualityScore}`
